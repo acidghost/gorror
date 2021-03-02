@@ -10,7 +10,7 @@ jobs:
       matrix:
         go: [1.16]
         os: [ubuntu-latest]
-    name: go-${{ matrix.go }}-${{ matrix.os }}
+    name: checks+go-${{ matrix.go }}-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
