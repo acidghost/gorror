@@ -1,5 +1,7 @@
 ![Gorror](logo.png)
 
+[![ci](https://github.com/acidghost/gorror/actions/workflows/ci.yml/badge.svg)](https://github.com/acidghost/gorror/actions/workflows/ci.yml)
+
 Easily generate Go error structures starting from string templates.
 
 ## Installation
