@@ -16,6 +16,9 @@ var golden = []Golden{
 	{"simpleCompatIs", true, simpleIn, simpleErrIsOut},
 	{"oneField", false, oneFieldIn, oneFieldOut},
 	{"multiFields", false, multiFieldsIn, multiFieldsOut},
+	{"complexField", false, complexFieldIn, complexFieldOut},
+	{"mustWrap", false, mustWrapIn, mustWrapOut},
+	{"noWrap", false, noWrapIn, noWrapOut},
 }
 
 // Golden represents a test case.
@@ -33,7 +36,7 @@ const simpleOut = `type errOpen struct {
 	_errWrap
 }
 
-func NewErrOpen() *errOpen {
+func newErrOpen() *errOpen {
 	return &errOpen{_errWrap{nil}}
 }
 
@@ -55,7 +58,7 @@ const simpleErrIsOut = `type errOpen struct {
 	_errWrap
 }
 
-func NewErrOpen() *errOpen {
+func newErrOpen() *errOpen {
 	return &errOpen{_errWrap{nil}}
 }
 
@@ -81,7 +84,7 @@ const oneFieldOut = `type errOpen struct {
 	filename string
 }
 
-func NewErrOpen(filename string) *errOpen {
+func newErrOpen(filename string) *errOpen {
 	return &errOpen{_errWrap{nil}, filename}
 }
 
@@ -109,7 +112,7 @@ const multiFieldsOut = `type errFileOp struct {
 	code int
 }
 
-func NewErrFileOp(op string, file string, code int) *errFileOp {
+func newErrFileOp(op string, file string, code int) *errFileOp {
 	return &errFileOp{_errWrap{nil}, op, file, code}
 }
 
@@ -126,6 +129,70 @@ func (e *errFileOp) Wrap(cause error) error {
 }
 
 func (*errFileOp) Is(e Err) bool { return e == ErrFileOp }`
+
+const complexFieldIn = `type Err string
+const ErrSome = Err("failed for {{c.Field[0] MyStruct %s}}")`
+
+const complexFieldOut = `type errSome struct {
+	_errWrap
+	c MyStruct
+}
+
+func newErrSome(c MyStruct) *errSome {
+	return &errSome{_errWrap{nil}, c}
+}
+
+func (e *errSome) Error() string {
+	if e.cause == nil {
+		return fmt.Sprintf("failed for %s", e.c.Field[0])
+	}
+	return fmt.Sprintf("failed for %s: %v", e.c.Field[0], e.cause)
+}
+
+func (e *errSome) Wrap(cause error) error {
+	e.cause = cause
+	return e
+}
+
+func (*errSome) Is(e Err) bool { return e == ErrSome }`
+
+const mustWrapIn = `type Err string
+const ErrSome = Err("wrap:some error")`
+
+const mustWrapOut = `type errSome struct {
+	_errWrap
+}
+
+func newErrSome(err error) *errSome {
+	return &errSome{_errWrap{err}}
+}
+
+func (e *errSome) Error() string {
+	return fmt.Sprintf("some error: %v", e.cause)
+}
+
+func (e *errSome) Wrap(cause error) error {
+	e.cause = cause
+	return e
+}
+
+func (*errSome) Is(e Err) bool { return e == ErrSome }`
+
+const noWrapIn = `type Err string
+const ErrSome = Err("nowrap:some error")`
+
+const noWrapOut = `type errSome struct {
+}
+
+func newErrSome() *errSome {
+	return &errSome{}
+}
+
+func (e *errSome) Error() string {
+	return fmt.Sprintf("some error")
+}
+
+func (*errSome) Is(e Err) bool { return e == ErrSome }`
 
 func TestGolden(t *testing.T) {
 	for _, test := range golden {
@@ -145,7 +212,7 @@ func TestGolden(t *testing.T) {
 
 			g := Generator{typeName: tokens[1], compatIs: test.compatIs}
 			g.loadPackage([]string{absFile})
-			for _, e := range g.errors {
+			for _, e := range g.specs {
 				g.generate(e)
 			}
 			got := string(g.format())

@@ -11,8 +11,8 @@ const (
 
 func main() {
 	e1 := errors.New("some external error")
-	e2 := NewErrOpen("filename.txt").Wrap(e1)
-	e3 := NewErrRead("filename.txt", 42).Wrap(e2)
+	e2 := newErrOpen("filename.txt").Wrap(e1)
+	e3 := newErrRead("filename.txt", 42).Wrap(e2)
 	if !ErrOpen.IsIn(e3) {
 		panic("unexpected stuff!")
 	}

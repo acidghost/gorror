@@ -7,7 +7,7 @@ type Err string
 const ErrFileOp = Err("failed to {{op string %s}} {{file string %q}} (code {{code int %d}})")
 
 func main() {
-	e := NewErrFileOp("create", "filename.txt", 42)
+	e := newErrFileOp("create", "filename.txt", 42)
 	if e.Error() != `failed to create "filename.txt" (code 42)` {
 		panic("wrong error message: " + e.Error())
 	}

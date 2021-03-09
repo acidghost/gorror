@@ -6,7 +6,7 @@ Easily generate Go error structures starting from string templates.
 
 ## Installation
 
-Simply install with Go: `go install github.com/acidghost/gorror`.
+Simply: `go install github.com/acidghost/gorror@latest`.
 
 ## Usage
 
@@ -26,20 +26,8 @@ type MyErr string
 
 const (
 	ErrOpen = MyErr("failed to open {{file string %q}}")
-	ErrRead = MyErr("failed to read from {{file string %q}} (code={{code uint %d}})")
+	ErrRead = MyErr("nowrap:failed to read from {{file string %q}} (code={{code uint %d}})")
 )
-
-func main() {
-	e1 := errors.New("some external error")
-	e2 := NewErrOpen("filename.txt").Wrap(e1)
-	e3 := NewErrRead("filename.txt", 42).Wrap(e2)
-	if !ErrOpen.IsIn(e3) {
-		panic("unexpected stuff!")
-	}
-	if !errors.Is(e3, e1) {
-		panic("unexpected stuff!")
-	}
-}
 ```
 
 The above code would generate, in a file called `myerr_def.go`, the following code:
@@ -77,7 +65,7 @@ type errOpen struct {
 	file string
 }
 
-func NewErrOpen(file string) *errOpen {
+func newErrOpen(file string) *errOpen {
 	return &errOpen{_errWrap{nil}, file}
 }
 
@@ -96,25 +84,16 @@ func (e *errOpen) Wrap(cause error) error {
 func (*errOpen) Is(e MyErr) bool { return e == ErrOpen }
 
 type errRead struct {
-	_errWrap
 	file string
 	code uint
 }
 
-func NewErrRead(file string, code uint) *errRead {
-	return &errRead{_errWrap{nil}, file, code}
+func newErrRead(file string, code uint) *errRead {
+	return &errRead{file, code}
 }
 
 func (e *errRead) Error() string {
-	if e.cause == nil {
-		return fmt.Sprintf("failed to read from %q (code=%d)", e.file, e.code)
-	}
-	return fmt.Sprintf("failed to read from %q (code=%d): %v", e.file, e.code, e.cause)
-}
-
-func (e *errRead) Wrap(cause error) error {
-	e.cause = cause
-	return e
+	return fmt.Sprintf("failed to read from %q (code=%d)", e.file, e.code)
 }
 
 func (*errRead) Is(e MyErr) bool { return e == ErrRead }

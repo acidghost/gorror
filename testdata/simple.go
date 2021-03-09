@@ -9,9 +9,9 @@ const (
 )
 
 func main() {
-	var e error = NewErrOpen()
+	var e error = newErrOpen()
 	ErrOpen.IsIn(e)
-	ee := NewErrOpen()
+	ee := newErrOpen()
 	external := errors.New("some other error")
 	var eee error = ee.Wrap(external)
 	if !ErrOpen.IsIn(eee) {
